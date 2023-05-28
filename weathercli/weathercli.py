@@ -1,32 +1,38 @@
+import contextlib
 import json
 import urllib
 import requests
 import typer
 from datetime import datetime
 from decouple import config
-from rich import print
+from rich import box, print
+from rich.columns import Columns
 from rich.console import Console
 from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 
 import logging
 
 API_KEY = config('API_KEY')
+console = Console()
+
 # Create and configure logger
 logging.basicConfig(filename="weather.log", format='%(asctime)s %(message)s',filemode='a')
- 
+
 # Creating an object
 logger = logging.getLogger()
-    
+
 # Setting the threshold of logger to INFO
 logger.setLevel(logging.INFO)
- 
-    
+
+
 # app info 
 app = typer.Typer(
     name="Weather CLI (Built by @AtharvaShah) with the power of Github Copilot 🎯",
     add_completion=False,
     rich_markup_mode="rich",
-    help="📕[bold green] Easy to use weather data fetcher and forecaster right within your terminal [/bold green]",
+    help="📕[bold green] Easy to use weather data fetcher and forecaster center within your terminal [/bold green]",
 )
 
 def print_weather(data):
@@ -51,24 +57,57 @@ def print_weather(data):
     current_wind_mph = data['current']['wind_mph']
     current_wind_direction = data['current']['wind_dir']
     current_humidity = data['current']['humidity']
+    # get current date in human readable format
+    date = datetime.now().strftime('%d %B %Y')
+    table = Table(
+            show_header=True,
+            header_style="bold gold3",
+            border_style="white",
+            title=f"\n📰 CURRENT WEATHER | {date}\n",
+            title_style="bold white on black",
+            title_justify="center",
+            box=box.SIMPLE_HEAVY
+        )
 
+    table.add_column("📍 Location", width=40, style="green", justify="center")
+    table.add_column("🌡️ Current Temperature", width=20, style="blue", justify="center")
+    table.add_column("🌬️ Current Wind Speed", width=25, style="yellow", justify="center")
+    table.add_column("💧 Current Humidity", width=20, style="violet", justify="center")
+    table.add_column("🌤️ Current Condition", width=30, style="dark_orange3", justify="center")
 
-    print(f"📍     Location: {address}")
-    print(f"🌡️      Current Temperature: {current_temp_celsius}°C")
-    print(f"🌬️      Current Wind: {current_wind_mph} mph, {current_wind_direction}")
-    print(f"💧     Current Humidity: {current_humidity}%")
-    print(f"🌤️      Current Condition: {current_condition}")
-    
+    table.add_row(address, f"{current_temp_celsius}°C", f"{current_wind_mph} mph, {current_wind_direction}", f"{current_humidity}%", current_condition)
+    print("\n\n")
+    console.print(table)
+    print("\n\n")
+
     total_forecast_days = len(data['forecast']['forecastday'])
+    table = Table(
+            show_header=True,
+            header_style="bold gold3",
+            border_style="white",
+            title=f"\n📰 FORECAST FOR THE NEXT {total_forecast_days} DAYS\n",
+            title_style="bold white on black",
+            title_justify="center",
+            box=box.SIMPLE_HEAVY
+        )
+
+    table.add_column("📅 Date", width=12, style="bold blue", justify="center")
+    table.add_column("📈 Max Temp °C", width=14, style="bold green", justify="center")
+    table.add_column("📉 Min Temp °C", width=14, style="bold red", justify="center")
+    table.add_column("🌡️ Avg Temp °C ", width=15, style="bold yellow", justify="center")
+    table.add_column("🌬️ Max Wind (kph)", width=18, style="bold magenta", justify="center")
+    table.add_column("💧 Rain (mm)", width=15, style="bold cyan", justify="center")
+    table.add_column("🌤️ Condition", width=20, style="bold dark_orange3", justify="center")
+    table.add_column("🌞 UV", width=5, style="bold violet", justify="right")
+    table.add_column("💧 Humidity", width=10, style="bold dark_orange3", justify="right")
+
     for day in range(total_forecast_days):
         day_json = data['forecast']['forecastday'][day]
         date = day_json['date']
-        
+
         # convert date to datetime object and then into human readable format
         date = datetime.strptime(date, '%Y-%m-%d').strftime('%d %B %Y')
-        
-        
-        print(f"📅     Forecast for {date}")
+
         max_temp_celsius = day_json['day']['maxtemp_c']
         min_temp_celsius = day_json['day']['mintemp_c']
         avg_temp_celsius = day_json['day']['avgtemp_c']
@@ -76,35 +115,44 @@ def print_weather(data):
         total_precip_mm = day_json['day']['totalprecip_mm']
         condition = day_json['day']['condition']['text']
         uv = day_json['day']['uv']
-        
-        print(f"📈     Max Temperature: {max_temp_celsius}°C")
-        print(f"📉     Min Temperature: {min_temp_celsius}°C")
-        print(f"🌡️      Avg Temperature: {avg_temp_celsius}°C")
-        print(f"🌬️      Max Wind: {max_wind_kph} kph")
-        print(f"💧     Total Precipitation: {total_precip_mm} mm")
-        print(f"🌤️      Condition: {condition}")
-        print(f"🌞      UV: {uv}")
-        print()
-        
+        humidity = day_json['day']['avghumidity']
 
+        # convert all values to string
+        max_temp_celsius = str(max_temp_celsius)
+        min_temp_celsius = str(min_temp_celsius)
+        avg_temp_celsius = str(avg_temp_celsius)
+        max_wind_kph = str(max_wind_kph)
+        total_precip_mm = str(total_precip_mm)
+        uv = str(uv)
+        humidity = str(humidity)
 
-@app.command(rich_help_panel="Weather CLI", help="🎫 Get the weather forecast for a city",)
+        table.add_row(date, max_temp_celsius, min_temp_celsius, avg_temp_celsius, max_wind_kph, total_precip_mm, condition, uv, humidity)
+
+    console.print(table)
+    print()
+    
+
+@app.command(rich_help_panel="Weather CLI", help="🎫 Get the weather forecast for a city")
 def forecast(city:str = typer.Argument(..., help="🏙️ City name")):
     """
-    This function is a command-line interface that retrieves the 5-day weather forecast for a given city using the WeatherAPI. It first checks if the data.json file exists, and if it does and the city name and date match, it retrieves the data from the file. Otherwise, it makes a GET request to the WeatherAPI to retrieve the data, adds a "fetched_on" field to the JSON data, and saves the data to the data.json file. If there is an error with the request, it prints an error message. The function takes one argument, the city name as a string, and has no return value.
+    Retrieves the weather forecast for a given city from the WeatherAPI. If the forecast for that city is already saved in a 'data.json' file, it returns the cached data. If the cached data is outdated or does not exist, it sends a GET request to the WeatherAPI and saves the response to the 'data.json' file. 
+
+    Args:
+        city (str): City name.
+        
+    Returns:
+        None
     """
+    
     try:
         data = None
         file_exists = False
 
         # Check if the data.json file exists
-        try:
+        with contextlib.suppress(FileNotFoundError):
             with open('data.json') as f:
                 data = json.load(f)
             file_exists = True
-        except FileNotFoundError:
-            pass
-
         if file_exists:
             # check if city.lower is a substring of data['location']['name'].lower()
             name_exists = city.lower() in data['location']['name'].lower() 
@@ -140,7 +188,7 @@ def forecast(city:str = typer.Argument(..., help="🏙️ City name")):
             else:
                 print(f"Error: {data['error']['message']}")
         else:
-            print("Error: Failed to retrieve weather data.")
+            print("[b red]🚨 Error: Failed to retrieve weather data. Please enter a valid city.[/b red]")
 
     except KeyError:
         print("[red b]🚨 The city you entered does not exist.[/red b] Please try again.")
