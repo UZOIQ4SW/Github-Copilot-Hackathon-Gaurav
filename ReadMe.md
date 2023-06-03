@@ -1,8 +1,11 @@
 # Weather Forecasting Tool
+![image](https://github.com/HighnessAtharva/Techgig-Github-Copilot-Hackathon/assets/68660002/aad7460e-7f02-4aef-91b4-39f7b6189e85)
+
 
 This is a command-line tool that fetches and displays the current weather forecast for a specific city. It leverages the OpenWeatherMap API to retrieve weather data and utilizes Python for data parsing and manipulation. The purpose of this tool is to provide an easy and efficient way to access accurate and up-to-date weather information, allowing users to plan their outdoor activities, travel, and day-to-day decision making.
 
 ## Features
+![image](https://github.com/HighnessAtharva/Techgig-Github-Copilot-Hackathon/assets/68660002/6559da0f-e2c5-4774-8852-6fe36ea11ab2)
 
 - Fetches weather data using the [WeatherAPI.com API](https://www.weatherapi.com/)
 - Retrieves current weather forecast for a specific city
@@ -56,6 +59,8 @@ python -m weathercli forecast "New York"
 ```
 
 5. The tool will fetch the weather data from the WeatherAPI.com API and display the current forecast for the specified city.
+![image](https://github.com/HighnessAtharva/Techgig-Github-Copilot-Hackathon/assets/68660002/1da465c9-0bee-451b-9fa1-064a28c539bf)
+
 
 ## Run Tests 👇🏻
 
