@@ -64,7 +64,7 @@ python -m weathercli forecast "New York"
 
 ## Run Tests 👇🏻
 
-```
+``
 # Move to source folder
 cd weathercli
 
