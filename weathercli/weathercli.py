@@ -39,10 +39,10 @@ app = typer.Typer(
 )
 
 
-@app.command(rich_help_panel="Weather CLI")
+@app.command(rich_help_panel="Weather CLI", help="🎫 Shows information about the CLI")
 def about():
     """
-    Shows information about the CLI
+    Print the about banner for the app. 
     """
     print_banner(console)
     print_about_app()
@@ -114,7 +114,7 @@ def print_weather(data):
     table.add_column("🌞 UV", width=5, style="bold violet", justify="right")
     table.add_column("💧 Humidity", width=10, style="bold dark_orange3", justify="right")
 
-    for day in range(total_forecast_days):
+    for day in range(1, total_forecast_days):
         day_json = data['forecast']['forecastday'][day]
         date = day_json['date']
 
@@ -180,7 +180,7 @@ def forecast(city:str = typer.Argument(..., help="🏙️ City name")):
 
         logger.info(msg=f"**CACHE MISS!** Making a request to the WeatherAPI for ***{city}***.")
         # Add parameters to the URL
-        url = f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={city}&days=5&aqi=no&alerts=no"
+        url = f"http://api.weatherapi.com/v1/forecast.json?key={API_KEY}&q={city}&days=6&aqi=no&alerts=no"
 
         # Send GET request
         response = requests.get(url)
@@ -212,6 +212,49 @@ def forecast(city:str = typer.Argument(..., help="🏙️ City name")):
         print("The URL was bad. Try a different one.")
     except requests.exceptions.RequestException as e:
         raise SystemExit(e) from e
+ 
+ 
+@app.command(rich_help_panel="Weather CLI", help="🎫 See history of forecast lookups")
+def history():
+    """
+    Refer the weather.log file for the history of lookups. The weather.log file contains the date and time of the lookup, the city name. Parse it and display it in a table.
+    """
+    
+    # read the weather.log file
+    with open('weather.log', 'r') as f:
+        data = f.readlines()
+        
+    # get the first 10 characters of each line
+    dates = [line[:18] for line in data]
+    
+    # convert all objects in data to datetime object 
+    dates = [datetime.strptime(line, '%Y-%m-%d %H:%M:%S') for line in dates]
+    
+    # convert all dates to human readable format with h:m:s
+    dates = [line.strftime('%d %B %Y, %H:%M:%S') for line in dates]
+    
+    # split each line on the third **
+    cities = [line.split('***') for line in data]
+    
+    # get the second element of each line
+    cities = [line[1] for line in cities]
+    
+    # reverse both lists
+    cities = cities[::-1]
+    dates = dates[::-1]
+    
+    # zip and iterate over the two lists
+    cities = list(zip(dates, cities))
+    
+    # make a table
+    table = Table(show_header=True, header_style="bold magenta", title="History of forecast lookups")
+    table.add_column("Date", justify="center")
+    table.add_column("City", justify="center")
+    
+    for date, city in cities:
+        table.add_row(date, city)
+         
+    console.print(table)
     
 
 if __name__ == "__main__":

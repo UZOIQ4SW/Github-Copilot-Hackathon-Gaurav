@@ -162,3 +162,5 @@ cython_debug/
 
 ppt_outline.md
 TODO.md
+
+weathercli/data.json
