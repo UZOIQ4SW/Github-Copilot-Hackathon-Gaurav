@@ -12,10 +12,13 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
+from about import print_about_app
+from banner import print_banner
+
 import logging
 
 API_KEY = config('API_KEY')
-console = Console()
+console = Console(record=False, color_system="truecolor")
 
 # Create and configure logger
 logging.basicConfig(filename="weather.log", format='%(asctime)s %(message)s',filemode='a')
@@ -34,6 +37,16 @@ app = typer.Typer(
     rich_markup_mode="rich",
     help="📕[bold green] Easy to use weather data fetcher and forecaster center within your terminal [/bold green]",
 )
+
+
+@app.command(rich_help_panel="Weather CLI")
+def about():
+    """
+    Shows information about the CLI
+    """
+    print_banner(console)
+    print_about_app()
+
 
 def print_weather(data):
     """
@@ -131,6 +144,7 @@ def print_weather(data):
     console.print(table)
     print()
     
+
 
 @app.command(rich_help_panel="Weather CLI", help="🎫 Get the weather forecast for a city")
 def forecast(city:str = typer.Argument(..., help="🏙️ City name")):
